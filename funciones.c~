@@ -1,0 +1,326 @@
+#include <ncurses.h>
+#include "funciones.h"
+
+void init(){
+  initscr();
+  cbreak();
+  noecho();
+  keypad(stdscr,TRUE);
+}
+
+void board(){
+  int i,j;
+  for(i=1;i<6;i++){
+    mvaddch(i,4,'|');
+    mvaddch(i,8,'|');
+    if(i!=0&&i%2==0){
+      for(j=0;j<=12;j++){
+	mvaddch(i,j,'-');
+      }
+    }
+    move(1,2);
+  }
+  refresh();
+}
+
+void initGame(int *datos){
+  int i;
+  for(i=0;i<=8;i++){
+    datos[i]=i+2;
+  }
+}
+
+int jugar(){
+  int datos[9];
+  int nJugador=1; //toma como valores 1(jugador 1) o 2 (jugador 2)
+  int entrada;
+  int x=2,y=1;
+  int victoria=0;
+  int puedeMover=0;
+  int numeroMovimientos=0;
+  mvprintw(0,0,"Es el turno del Jugador 1 (X) [q para salir]");
+  move(y,x);
+  initGame(datos);
+  refresh();
+
+  while(entrada!='q'){
+    if(numeroMovimientos==9){
+      mvprintw(7,0,"Empate");
+      entrada=getch();
+      erase();
+      return 3;
+    }
+    entrada=getch();
+    if(entrada!=' '){
+      switch(entrada){
+      case KEY_UP:
+	if(y==3||y==5){
+	  move(y-=2,x);
+	}
+	break;
+      case KEY_DOWN:
+	if(y==1||y==3){
+	  move(y+=2,x);
+	}
+	break;
+      case KEY_RIGHT:
+	if(x==2||x==6){
+	  move(y,x+=4);
+	}
+	break;
+      case KEY_LEFT:
+	if(x==6||x==10){
+	  move(y,x-=4);
+	}
+	break;
+      }
+    }
+      if(entrada==' '){
+	
+	if(nJugador==1){
+	  getyx(stdscr,y,x);
+	  puedeMover=esValido(x,y,datos,1);
+	  if(puedeMover==OKAY){
+	  mvaddch(y,x,'X');
+	  victoria=checkVictoria(datos);
+	  if(victoria){
+	    mvprintw(7,0,"Jugador 1 gana!!!!");
+	    entrada=getch();
+	    erase();
+	    return TRUE;
+	  }
+	  numeroMovimientos+=1;
+	  nJugador=2;
+	  mvprintw(0,0,"Es el turno del Jugador 2 (O) [q para salir]");
+	  move(y,x);
+	  }
+	}else{
+	  getyx(stdscr,y,x);
+	  puedeMover=esValido(x,y,datos,0);
+	  if(puedeMover==OKAY){
+	  mvaddch(y,x,'O');
+	  victoria=checkVictoria(datos);
+	  if(victoria){
+	    mvprintw(7,0,"Jugador 2 gana!!!!");
+	    entrada=getch();
+	    erase();
+	    return TRUE;
+	  }
+	  numeroMovimientos+=1;
+	  nJugador=1;
+	  mvprintw(0,0,"Es el turno del Jugador 1 (X) [q para salir]");
+	  move(y,x);
+	  }
+	}
+      }
+    }
+    refresh();
+  
+  return 0;
+}
+
+int esValido(int x,int y,int *datos,int XoO){
+  if(y==1){
+    if(x==2){
+      if(datos[0]>1){
+	datos[0]=XoO;
+	return OKAY;
+      }
+    }else if(x==6){
+      if(datos[1]>1){
+	datos[1]=XoO;
+	return OKAY;
+      }
+    }else if(x==10){
+      if(datos[2]>1){
+	datos[2]=XoO;
+	return OKAY;
+      }
+    }
+  }else if(y==3){
+    if(x==2){
+      if(datos[3]>1){
+	datos[3]=XoO;
+	return OKAY;
+      }
+    }else if(x==6){
+      if(datos[4]>1){
+	datos[4]=XoO;
+	return OKAY;
+      }
+    }else if(x==10){
+      if(datos[5]>1){
+	datos[5]=XoO;
+	return OKAY;
+      }
+    }
+  }else if(y==5){
+    if(x==2){
+      if(datos[6]>1){
+	datos[6]=XoO;
+	return OKAY;
+      }
+    }else if(x==6){
+      if(datos[7]>1){
+	datos[7]=XoO;
+	return OKAY;
+      }
+    }else if(x==10){
+      if(datos[8]>1){
+	datos[8]=XoO;
+	return OKAY;
+      }
+    }
+  }
+  return FALSE;
+}
+
+int checkVictoria(int *datos){ 
+  /*horizontales*/
+  if(datos[0]==datos[1]&&datos[1]==datos[2]){
+    return TRUE;
+  }else if(datos[3]==datos[4]&&datos[4]==datos[5]){
+    return TRUE;
+  }else if(datos[6]==datos[7]&&datos[7]==datos[8]){
+    return TRUE;
+  }
+  /*verticales*/
+  else if(datos[0]==datos[3]&&datos[3]==datos[6]){
+    return TRUE;
+  }else if(datos[1]==datos[4]&&datos[4]==datos[7]){
+    return TRUE;
+  }else if(datos[2]==datos[5]&&datos[5]==datos[8]){
+    return TRUE;
+  }
+  /*diagonales*/
+  else if(datos[0]==datos[4]&&datos[4]==datos[8]){
+    return TRUE;
+  }else if(datos[2]==datos[4]&&datos[4]==datos[6]){
+    return TRUE;
+  }
+  return FALSE;
+}
+
+int jugar1p(){
+  int datos[9];
+  int posIA[2];
+  int nJugador=1;
+  int entrada;
+  int x=2,y=1;
+  int victoria=0;
+  int puedeMover=0;
+  int numeroMovimientos=0;
+  mvprintw(0,0,"Es el turno del Jugador 1 (X) [q para salir]");
+  move(y,x);
+  initGame(datos);
+  refresh();
+  while(entrada!='q'){
+     if(numeroMovimientos==9){
+      mvprintw(7,0,"Empate");
+      entrada=getch();
+      erase();
+      return 3;
+    }
+      entrada=getch();
+      if(entrada!=' '){
+      switch(entrada){
+      case KEY_UP:
+        if(y==3||y==5){
+          move(y-=2,x);
+	}
+        break;
+      case KEY_DOWN:
+        if(y==1||y==3){
+          move(y+=2,x);
+        }
+        break;
+      case KEY_RIGHT:
+        if(x==2||x==6){
+          move(y,x+=4);
+        }
+        break;
+      case KEY_LEFT:
+        if(x==6||x==10){
+          move(y,x-=4);
+        }
+        break;
+      }
+     }
+     if(entrada==' '){
+
+        if(nJugador==1){
+	  getyx(stdscr,y,x);
+          puedeMover=esValido(x,y,datos,1);
+          if(puedeMover==OKAY){
+          mvaddch(y,x,'X');
+          victoria=checkVictoria(datos);
+          if(victoria){
+            mvprintw(7,0,"Jugador 1 gana!!!!");
+            entrada=getch();
+            erase();
+            return TRUE;
+          }
+	  numeroMovimientos+=1;
+	  movimientoIA(datos,posIA,numeroMovimientos);
+	  puedeMover=esValido(posIA[1],posIA[0],datos,0);
+	  if(puedeMover==OKAY){
+	    mvaddch(posIA[0],posIA[1],'O');
+	    victoria=checkVictoria(datos);
+	    if(victoria){
+	      mvprintw(7,0,"Jugador 2 Gana!!!!");
+	      entrada=getch();
+	      erase();
+	      return TRUE;
+	    }
+	    numeroMovimientos+=1;
+	    move(y,x);
+	  }
+	  }
+	}	  
+     }
+  }
+  refresh();
+  return 0;
+}
+
+void movimientoIA(int *datos, int *posIA,int nmov){
+  if(nmov==1&&datos[4]==1){
+    posIA[0]=1;
+    posIA[1]=2;
+  }else if(nmov==1&&datos[4]!=1){
+    posIA[0]=3;
+    posIA[1]=6;
+  }/*else if(nmov>=3){
+    if(datos[0]==0&&datos[2]==datos[0]){
+      posIA[0]=1;
+      posIA[0]=6;
+    }
+    }*/else if(datos[0]==datos[2]&&datos[1]!=0){
+    posIA[0]=1;
+    posIA[1]=6;
+  }else if(datos[0]==datos[6]&&datos[3]!=0){
+    posIA[0]=3;
+    posIA[1]=2;
+  }else if(datos[0]==datos[8]&&datos[7]!=0){
+    posIA[0]=5;
+    posIA[1]=6;  
+  }else if(datos[4]==datos[2]&&datos[6]!=0){
+    posIA[0]=5;
+    posIA[1]=2;
+  }else if(datos[4]==datos[6]&&datos[2]!=0){
+    posIA[0]=1;
+    posIA[1]=10;
+  }else if(datos[4]==datos[1]&&datos[7]!=0){
+    posIA[0]=5;
+    posIA[1]=6;
+  }else if(datos[4]==datos[7]&&datos[1]!=0){
+    posIA[0]=1;
+    posIA[1]=6;
+  }else if(datos[4]==datos[5]&&datos[3]!=0){
+    posIA[0]=3;
+    posIA[1]=2;
+  }else if(datos[4]==datos[3]&&datos[5]!=0){
+    posIA[0]=3;
+    posIA[1]=10;
+  }
+}
